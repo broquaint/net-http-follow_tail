@@ -22,10 +22,6 @@ class Net::HTTP::FollowTail
       @state == :error
     end
 
-    def offset
-      response.content_length
-    end
-
     def content
       response.body
     end
