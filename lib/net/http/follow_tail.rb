@@ -25,6 +25,10 @@ class Net::HTTP::FollowTail
     def offset
       response.content_length
     end
+
+    def content
+      response.body
+    end
   end
 
   class Tailer  
