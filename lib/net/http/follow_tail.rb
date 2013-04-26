@@ -149,9 +149,11 @@ class Net::HTTP::FollowTail
       # Hope max_retries isn't too large ahem.
       get_tail tailer, block if tailer.retries_so_far <= tailer.max_retries
     else
-      block.call(result, tailer) if result.is_success?
-      # Everyone loves $stdout amirite?
-      puts "[#{Time.now}] Now at #{tailer.offset} for #{tailer.uri}" if tailer.verbose
+      if result.is_success?
+        block.call(result, tailer) 
+        # Everyone loves $stdout amirite?
+        puts "[#{Time.now}] Now at #{tailer.offset} for #{tailer.uri}" if tailer.verbose
+      end
       sleep tailer.regular_wait
     end
   end
