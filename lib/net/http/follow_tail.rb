@@ -71,7 +71,7 @@ class Net::HTTP::FollowTail
     end
 
     def update_offset(offset_increment)
-      @offset = offset_increment
+      @offset += offset_increment
     end
 
     def head_request

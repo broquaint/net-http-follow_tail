@@ -121,13 +121,34 @@ describe Net::HTTP::FollowTail::Tailer do
         .to_return(headers: { 'Content-Length' => 10 })
       stub_request(:get, example_host)
         .with(headers: {'Range' => 'bytes=5-10'})
-        .to_return(headers: { 'Content-Length' => 10 })
+        .to_return(headers: { 'Content-Length' => 5 })
 
       result = tailer.tail
       expect(result).to be_an_instance_of(Net::HTTP::FollowTail::Result)
       expect(result.is_success?).to be_true
       expect(result.method).to be(:get)
       expect(tailer.offset).to eq(10)
+
+      stub_request(:head, example_host)
+        .to_return(headers: { 'Content-Length' => 15 })
+      stub_request(:get, example_host)
+        .with(headers: {'Range' => 'bytes=10-15'})
+        .to_return(headers: { 'Content-Length' => 5 })
+
+      result = tailer.tail
+      expect(tailer.offset).to eq(15)
+    end
+
+    it 'correctly updates against existing offset' do
+      stub_request(:head, example_host)
+        .to_return(headers: { 'Content-Length' => 66 })
+      stub_request(:get, example_host)
+        .with(headers: {'Range' => 'bytes=50-66'})
+        .to_return(headers: { 'Content-Length' => 16 })
+
+      tailer = Net::HTTP::FollowTail::Tailer.new(uri: example_uri, offset: 50)
+      tailer.tail
+      expect(tailer.offset).to eq(66)
     end
 
     it 'to handle HEAD errors' do
