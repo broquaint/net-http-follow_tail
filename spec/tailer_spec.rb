@@ -15,7 +15,6 @@ describe Net::HTTP::FollowTail::Tailer do
       expect(tailer.wait_in_seconds).to eq(default_wait)
       expect(tailer.max_retries).to eq(5)
       expect(tailer.retries_so_far).to eq(0)
-      expect(tailer.verbose).to eq(false)
     end
 
     it 'requires a uri to be specified' do
@@ -30,19 +29,17 @@ describe Net::HTTP::FollowTail::Tailer do
       expect(tailer.uri).to eql(uri)
     end
 
-    it 'accepts offset, wait, max_retries & verbose options' do
+    it 'accepts offset, wait & max_retries options' do
       tailer = Net::HTTP::FollowTail::Tailer.new(
         uri: example_uri,
         offset: 1234,
         wait: 20,
         max_retries: 2,
-        verbose: true
       )
       expect(tailer.uri).to be_an_instance_of(URI::HTTP)
       expect(tailer.offset).to eq(1234)
       expect(tailer.wait_in_seconds).to eq(20)
       expect(tailer.max_retries).to eq(2)
-      expect(tailer.verbose).to eq(true)
     end
   end
 

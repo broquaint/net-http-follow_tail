@@ -29,8 +29,7 @@ class Net::HTTP::FollowTail
 
   class Tailer  
     attr_reader :uri, :offset, :wait_in_seconds, :exponential_backoff,
-                :max_retries, :retries_so_far,
-                :verbose
+                :max_retries, :retries_so_far
     attr_writer :still_following
     def initialize(opts)
       raise ArgumentError, 'A :uri must be passed to the constructor' unless opts[:uri]
@@ -46,8 +45,6 @@ class Net::HTTP::FollowTail
       @exponential_backoff = get_backoff_list
 
       @still_following = true
-
-      @verbose = opts[:verbose] || false
     end
 
     def still_following?
@@ -145,11 +142,8 @@ class Net::HTTP::FollowTail
       # Hope max_retries isn't too large ahem.
       get_tail tailer, block if tailer.retries_so_far <= tailer.max_retries
     else
-      if result.is_success?
-        block.call(result, tailer) 
-        # Everyone loves $stdout amirite?
-        puts "[#{Time.now}] Now at #{tailer.offset} for #{tailer.uri}" if tailer.verbose
-      end
+      block.call(result, tailer) if result.is_success?
+
       sleep tailer.regular_wait
     end
   end
