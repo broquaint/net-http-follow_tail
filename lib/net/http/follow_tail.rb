@@ -77,7 +77,7 @@ class Net::HTTP::FollowTail
     def tail
       begin
         head_response = head_request
-      rescue Timeout::Error, SocketError, EOFError
+      rescue Timeout::Error, SocketError, EOFError, Errno::ETIMEDOUT
         return Result.new(state: :error, method: :head)
       end
       # TODO head_resonse.value
