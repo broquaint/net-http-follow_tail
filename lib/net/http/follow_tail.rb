@@ -12,7 +12,7 @@ class Net::HTTP::FollowTail
     def has_response?
       not @response.nil?
     end
-    
+
     def is_success?
       @state == :success
     end
@@ -35,7 +35,7 @@ class Net::HTTP::FollowTail
     has :still_following,     is: :rw,      default: -> { true }
 
     def build(opts)
-      @uri = opts[:uri].kind_of?(URI::Generic) ? opts[:uri] : URI.parse(opts[:uri])
+      @uri = opts[:uri].kind_of?(URI::HTTP) ? opts[:uri] : URI.parse(opts[:uri])
     end
 
     def still_following?
@@ -100,7 +100,7 @@ class Net::HTTP::FollowTail
     end
 
     private
-    
+
     def get_backoff_list
       ExponentialBackoff.new(
         wait_in_seconds, wait_in_seconds ** 2
