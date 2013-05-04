@@ -20,7 +20,7 @@ describe Net::HTTP::FollowTail::Tailer do
     it 'requires a uri to be specified' do
       expect {
         Net::HTTP::FollowTail::Tailer.new
-      }.to raise_error(ArgumentError)
+      }.to raise_error(Reindeer::Meta::Attribute::AttributeError)
     end
 
     it 'accepts a URI instance' do
@@ -33,7 +33,7 @@ describe Net::HTTP::FollowTail::Tailer do
       tailer = Net::HTTP::FollowTail::Tailer.new(
         uri: example_uri,
         offset: 1234,
-        wait: 20,
+        wait_in_seconds: 20,
         max_retries: 2,
       )
       expect(tailer.uri).to be_an_instance_of(URI::HTTP)
@@ -47,7 +47,7 @@ describe Net::HTTP::FollowTail::Tailer do
     it 'always returns wait_in_seconds' do
       tailer = Net::HTTP::FollowTail::Tailer.new(
         uri: example_uri,
-        wait: 66,
+        wait_in_seconds: 66,
       )
 
       expect(tailer.wait_in_seconds).to eq(66)

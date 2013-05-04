@@ -1,15 +1,13 @@
 require 'net/http'
 require 'uri'
 require 'exponential_backoff'
+require 'reindeer'
 
 class Net::HTTP::FollowTail
-  class Result
-    attr_reader :state, :method, :response
-    def initialize(args)
-      @state    = args[:state]
-      @method   = args[:method]
-      @response = args[:response]
-    end
+  class Result < Reindeer
+    has :state,    is_a: Symbol
+    has :method,   is_a: Symbol
+    has :response, is_a: Net::HTTPSuccess
 
     def has_response?
       not @response.nil?
@@ -27,24 +25,17 @@ class Net::HTTP::FollowTail
     end
   end
 
-  class Tailer  
-    attr_reader :uri, :offset, :wait_in_seconds, :exponential_backoff,
-                :max_retries, :retries_so_far
-    attr_writer :still_following
-    def initialize(opts)
-      raise ArgumentError, 'A :uri must be passed to the constructor' unless opts[:uri]
+  class Tailer < Reindeer
+    has :uri,                 required: true
+    has :offset,              is_a: Fixnum, default: -> { 0 }
+    has :wait_in_seconds,     is_a: Fixnum, default: -> { 60 }
+    has :exponential_backoff, lazy_build: true
+    has :max_retries,         is_a: Fixnum, default: -> { 5 }
+    has :retries_so_far,      is_a: Fixnum, default: -> { 0 }
+    has :still_following,     is: :rw,      default: -> { true }
 
-      @uri    = opts[:uri].kind_of?(URI::Generic) ? opts[:uri] : URI.parse(opts[:uri])
-      @offset = opts[:offset] || 0
-
-      @wait_in_seconds = opts[:wait] || 60
-
-      @max_retries    = opts[:max_retries] || 5
-      @retries_so_far = 0
-
-      @exponential_backoff = get_backoff_list
-
-      @still_following = true
+    def build(opts)
+      @uri = opts[:uri].kind_of?(URI::Generic) ? opts[:uri] : URI.parse(opts[:uri])
     end
 
     def still_following?
@@ -68,7 +59,7 @@ class Net::HTTP::FollowTail
     end
 
     def update_offset(offset_increment)
-      @offset += offset_increment
+      @offset += offset_increment.to_i
     end
 
     def head_request
@@ -114,6 +105,10 @@ class Net::HTTP::FollowTail
       ExponentialBackoff.new(
         wait_in_seconds, wait_in_seconds ** 2
       ).intervals_for(0 .. max_retries)
+    end
+
+    def build_exponential_backoff
+      get_backoff_list
     end
   end
 

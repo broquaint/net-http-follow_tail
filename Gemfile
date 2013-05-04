@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'exponential-backoff'
+gem 'reindeer'
 
 group :test do
   gem 'rake'

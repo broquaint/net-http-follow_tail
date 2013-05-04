@@ -12,6 +12,7 @@ GEM
       method_source (~> 0.8)
       slop (~> 3.4)
     rake (10.0.4)
+    reindeer (0.0.1)
     rspec (2.13.0)
       rspec-core (~> 2.13.0)
       rspec-expectations (~> 2.13.0)
@@ -32,5 +33,6 @@ DEPENDENCIES
   exponential-backoff
   pry
   rake
+  reindeer
   rspec
   webmock
