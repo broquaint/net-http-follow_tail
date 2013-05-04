@@ -60,13 +60,7 @@ describe Net::HTTP::FollowTail::Tailer do
 
       expect(tailer.wait_in_seconds).to eq(default_wait)
       expect(tailer.error_wait).to eq(default_wait)
-      # XXX Setting this in error_wait is a bit gross.
-      expect(tailer.retries_so_far).to eq(1)
       expect(tailer.error_wait).to be > default_wait
-      
-      expect(tailer.regular_wait).to eq(default_wait)
-      expect(tailer.retries_so_far).to eq(0)
-      expect(tailer.error_wait).to eq(default_wait)
     end
   end
 

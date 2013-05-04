@@ -41,13 +41,55 @@ describe Net::HTTP::FollowTail do
   describe '#get_tail' do
     it 'should make a request and call a block', simple_stub_request: true do
       a_tailer = Net::HTTP::FollowTail::Tailer.new(uri: 'http://example.com')
-      Net::HTTP::FollowTail.get_tail(a_tailer, Proc.new{ |result, tailer|
+      Net::HTTP::FollowTail.get_tail(a_tailer, false, Proc.new{ |result, tailer|
         expect(tailer).to eql(a_tailer)
         expect(result.is_success?).to be_true
       })
     end
 
-    # Not sure how to test this.
-    it 'should retry when an error is received'
+    # Incidentally tests always_callback which was introduced to allow
+    # this testing to work.
+    it 'should retry when an error is received' do
+      stub_request(:head, 'example.com').to_timeout
+      Net::HTTP::FollowTail.stub(:sleep) { }
+
+      # A bit gross but effective.
+      call_count = 0
+
+      a_tailer = Net::HTTP::FollowTail::Tailer.new(uri: 'http://example.com')
+      Net::HTTP::FollowTail.get_tail(a_tailer, true, Proc.new{ |result, tailer|
+          if call_count == 1
+            expect(result.is_success?).to be_true
+            call_count += 1
+          else
+            expect(result.is_success?).to be_false
+            call_count += 1
+
+            stub_request(:head, 'example.com')
+              .to_return(headers: { 'Content-Length' => 321 })
+            stub_request(:get, 'example.com')
+              .with(headers: {'Range' => 'bytes=0-321'})
+              .to_return(headers: { 'Content-Length' => 321 })
+          end
+        })
+      expect(call_count).to eq(2)
+    end
+
+    it 'exit loop when max_retries is hit' do
+      stub_request(:head, 'example.com').to_timeout
+      Net::HTTP::FollowTail.stub(:sleep) { }
+
+      a_tailer = Net::HTTP::FollowTail::Tailer.new(
+        uri: 'http://example.com',
+        max_retries: 2
+      )
+
+      Net::HTTP::FollowTail.get_tail(a_tailer, true, Proc.new{ |result, tailer|
+          expect(result.is_success?).to be_false
+        })
+
+      expect(a_tailer.still_following?).to be_false
+      expect(a_tailer.retries_so_far).to eq(2)
+    end
   end
 end

@@ -44,11 +44,9 @@ class Net::HTTP::FollowTail
 
     # This and regular_wait need new names!
     def error_wait
-      @retries_so_far += 1
       if exponential_backoff.length > 1
         exponential_backoff.shift
       else
-        still_following = false
         exponential_backoff.first
       end
     end
@@ -75,6 +73,8 @@ class Net::HTTP::FollowTail
     end
 
     def tail
+      @retries_so_far += 1
+
       begin
         head_response = head_request
       rescue Timeout::Error, SocketError, EOFError, Errno::ETIMEDOUT
@@ -113,11 +113,13 @@ class Net::HTTP::FollowTail
   end
 
   def self.follow(opts, &block)
-    tailers = normalize_options(opts).collect{|o| Tailer.new(o)}
+    tailers = normalize_options(opts).collect do |o|
+      {t: Tailer.new(o), ac: o[:always_callback]}
+    end
 
-    while tailers.any? {|t| t.still_following?}
-      for tailer in tailers.select{|t| t.still_following?}
-        get_tail tailer, block
+    while tailers.any? {|h| h[:t].still_following?}
+      for tailer in tailers.select{|h| h[:t].still_following?}
+        get_tail tailer[:t], tailer[:ac], block
       end
     end
   end
@@ -130,16 +132,24 @@ class Net::HTTP::FollowTail
     opts
   end
 
-  def self.get_tail(tailer, block)
+  def self.get_tail(tailer, always_callback, block)
     result = tailer.tail
-    if result.is_error?
-      sleep tailer.error_wait
-      # Hope max_retries isn't too large ahem.
-      get_tail tailer, block if tailer.retries_so_far <= tailer.max_retries
-    else
-      block.call(result, tailer) if result.is_success?
 
-      sleep tailer.regular_wait
+    while result.is_error?
+      block.call(result, tailer) if always_callback
+      return unless tailer.still_following?
+
+      if tailer.retries_so_far >= tailer.max_retries
+        # Would throw an exception but that breaks out of the #follow loop too.
+        tailer.still_following = false
+        return
+      end
+      sleep tailer.error_wait
+      result = tailer.tail
     end
+
+    block.call(result, tailer) if result.is_success? or always_callback
+
+    sleep tailer.regular_wait
   end
 end
