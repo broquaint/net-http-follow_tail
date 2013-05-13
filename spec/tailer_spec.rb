@@ -149,6 +149,7 @@ describe Net::HTTP::FollowTail::Tailer do
       expect(result.is_error?).to be_true
       expect(result.method).to be(:head)
       expect(result.has_response?).to be_false
+      expect(result.error).to be_an_instance_of(Timeout::Error)
     end
 
     it 'to handle GET errors' do

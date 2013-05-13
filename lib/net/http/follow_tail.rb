@@ -8,6 +8,7 @@ class Net::HTTP::FollowTail
     has :state,    is_a: Symbol
     has :method,   is_a: Symbol
     has :response, is_a: Net::HTTPSuccess
+    has :error,    is_a: Exception
 
     def has_response?
       not @response.nil?
@@ -77,11 +78,12 @@ class Net::HTTP::FollowTail
 
       begin
         head_response = head_request
-      rescue Timeout::Error, SocketError, EOFError, Errno::ETIMEDOUT
-        return Result.new(state: :error, method: :head)
+      rescue Timeout::Error, SocketError, EOFError, Errno::ETIMEDOUT => err
+        return Result.new(state: :error, method: :head, error: err)
       end
-      # TODO head_resonse.value
-      
+
+      # TODO invoke head_response.value to check for non 200s.
+
       size_now = head_response.content_length
       if size_now == offset
         return Result.new(state: :no_change, method: :head, response: head_response)
@@ -89,8 +91,8 @@ class Net::HTTP::FollowTail
 
       begin
         get_response = get_request(size_now)
-      rescue Timeout::Error, SocketError, EOFError
-        return Result.new(state: :error, method: :get)
+      rescue Timeout::Error, SocketError, EOFError => err
+        return Result.new(state: :error, method: :get, error: err)
       end
 
       update_offset get_response.content_length
