@@ -40,6 +40,12 @@ exposing the result of the most recent tail request at the latter the
 current tailing state. By default it is only called when the tail
 request was successful.
 
+# Example
+
+This module can be seen put to use at:
+
+https://github.com/broquaint/soup-stash/blob/master/script/keeping-up-with-the-logs
+
 # Author
 
 Dan Brook `<dan@broquaint.com>`
