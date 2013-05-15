@@ -91,7 +91,7 @@ class Net::HTTP::FollowTail
 
       begin
         get_response = get_request(size_now)
-      rescue Timeout::Error, SocketError, EOFError => err
+      rescue Timeout::Error, SocketError, EOFError, Errno::ETIMEDOUT => err
         return Result.new(state: :error, method: :get, error: err)
       end
 
